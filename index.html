@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Projeto PG</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="funcoesaux.js"></script>
+  <script src="watcher.js"></script>
+  <script src="main.js"></script>
+  <script src="painel.js"></script>
+  <link rel="stylesheet" href="libs/bootstrap.min.css">
+  <style>
+    html, body {margin: 0; height: 100%;}
+    #telaTemp {display: none}
+    #desenho {width: 100%; overflow-x: auto; height: calc(100% - 160px); overflow-y: auto; border-bottom: 3px solid #000000;}
+    #painel {background-color: #333333; float: left; width: 100%; color: #FFFFFF; border-top: 1px solid #666666; height: calc(160px);}
+    #configinicial {margin-left: 1rem; margin-top: 1rem;}
+    #configuracaopos > div {float: left; margin-left: 1rem; margin-top: 1rem; padding-right: 1rem; border-right: 1px solid #444444}
+    .mtop {margin-top: 1rem;}
+  </style>
+</head>
+<body>
+  <div id="desenho">
+  </div>
+  <div id="painel">
+    <div id="configinicial" class="container">
+      <div class="row">
+        <div class="col-lg-2">
+          Largura: <input class="form-control" type="number" min="0" id="inputwidth" value="500">
+        </div>
+        <div class="col-lg-2">
+          Altura: <input class="form-control" type="number" min="0" id="inputheight" value="500">
+        </div>
+        <div class="col-lg-2"><br />
+          <button class="btn btn-primary" onclick="criarcanvas()">Criar</button>
+        </div>
+      </div>
+    </div>
+    <div id="configuracaopos" style="display: none;">
+      <div class="row" style="margin-right: 0">
+        <div class="col-lg-2">
+          <div id="adicionarimagem">
+            <input id='inputimagem' name='arquivo' type='file' title='Adicionar imagem' style="opacity: 0;">
+            <label for="inputimagem" style="background-color: #CCCCCC; padding: 0.5rem; color: #000000">Selecione uma imagem</label>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <div id="rotacao" class="container">
+            <div class="row">
+              <div class="col">
+                Rotaçao
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Graus:
+              </div>
+              <div class="col-lg-6">
+                <input id='grausrotacao' class="config" type="number" min="-360" max="360" value="90">
+              </div>
+            </div>
+            <div class="row mtop">
+              <div class="col-lg-6">
+                <input type="button" style="width: 100%; margin-top: 30px;" class="config btn btn-primary" value="Ok" onclick="clickOk('rotacao', [parseFloat($('#grausrotacao').val())])">
+              </div>
+              <div class="col-lg-6">
+                <input type="button" style="width: 100%; margin-top: 30px;" class="config btn btn-warning" value="Ok" onclick="clickOk('rotacaointer', [parseFloat($('#grausrotacao').val())])">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <div id="cisalhamento" class="container"> <!-- Atenção, cizalhamento horizontal -> x = x + Ny, como o Y cresce pra baixo no canvas o cisalhamento é invertido em relação ao plano cartesiano -->
+            <div class="row">
+              <div class="col-lg-12">
+                Cisalhamento
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Horizontal:
+              </div>
+              <div class="col-lg-6">
+                <input id="cisalhamentoh" class="config" type="number" max="5" min="-5" value=2>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Vertical:
+              </div>
+              <div class="col-lg-6">
+                <input id="cisalhamentov" class="config" type="number" max="5" min="-5" value="0">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12 mtop">
+                <input style="width: 100%;" class="config btn btn-primary" type="button" value="Ok" onclick="clickOk('cisalhamento', [parseFloat($('#cisalhamentoh').val()), parseFloat($('#cisalhamentov').val())])">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <div id="escala" class="container">
+            <div class="row">
+              <div class="col-lg-12">
+                Escala 
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Vertical:
+              </div>
+              <div class="col-lg-6">
+                <input id="escalavertical" class="config" type="number" min="0" max="10" value="2">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Horizontal:
+              </div>
+              <div class="col-lg-6">
+                <input id="escalahorizontal" class="config" type="number" min="0" max="10" value="2">
+              </div>
+            </div>
+            <div class="row mtop">
+              <div class="col-lg-6">
+                <input style="width: 100%;" type="button" class="config btn btn-primary" value="Ok" onclick="clickOk('escala', [parseFloat($('#escalavertical').val()), parseFloat($('#escalahorizontal').val())])">                
+              </div>
+              <div class="col-lg-6">
+                <input style="width: 100%;" type="button" class="config btn btn-warning" value="Ok" onclick="clickOk('escalainter', [parseFloat($('#escalavertical').val()), parseFloat($('#escalahorizontal').val())])">                
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <div id="translacao" class="container">
+            <div class="row">
+              <div class="col-lg-12">
+                Translação
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                X:
+              </div>
+              <div class="col-lg-6">
+                <input id="translacaoX" type="number" class="config" min="0" max="0" value="10">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                Y:
+              </div>
+              <div class="col-lg-6">
+                <input id="translacaoY" type="number" class="config" min="0" max="0" value="10">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-12">
+                <input style="width: 100%;" type="button" class="config btn btn-primary mtop" value="Ok" onclick="clickOk('translada', [parseFloat($('#translacaoX').val()), parseFloat($('#translacaoY').val())])">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-2">
+          <div id="etapas" class="container">
+            <div class="row">
+              <div class="col-lg-12">
+                Etapas:
+              </div>
+            </div>
+            <div id="etapasconfig" class="row">
+              <div class="col-lg-12">
+                <input id="numetapas" class="config" type="number" min="1" max="100" value="1">
+              </div>
+            </div>
+            <div id="etapasok" class="row mtop">
+              <div class="col-lg-12">
+                <input style="width: 100%; margin-top: 30px; display: none;" id="next" class="btn btn-success" type="button" value=">>" onclick="next()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
